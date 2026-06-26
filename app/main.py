@@ -12,6 +12,7 @@ Prefijo de rutas: /api/bonos  (para que nginx pueda enrutar por prefijo).
 """
 import os
 from contextlib import asynccontextmanager
+from fastapi.responses import JSONResponse
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,21 +53,19 @@ class ReclamarRequest(BaseModel):
     # (p.ej. lo que el usuario recarga o apostó). Ignorado en 'monto_fijo'.
     monto_base: float = Field(default=0, ge=0, description="Base para bonos por porcentaje")
 
-
 @app.get("/livez")
 def livez():
-    """Liveness: el proceso está vivo. No depende de la BD."""
-    return {"status": "ok"}
+    return {"status": "ok", "service": "bonos-service"}
 
 @app.get("/readyz")
 def readyz():
-    """Readiness: ¿puede recibir tráfico? Verifica la conexión a PostgreSQL."""
-    from .db import ping
-
-    if ping():
-        return {"status": "ready", "db": "up"}
-    raise HTTPException(status_code=503, detail="DB no disponible")
-
+    try:
+        with conexion() as conn:
+            with dict_cursor(conn) as cur:
+                cur.execute("SELECT 1")
+        return {"status": "ready", "service": "bonos-service"}
+    except Exception as e:
+        return JSONResponse(status_code=503, content={"status": "not ready", "error": str(e)})
 
 @app.get("/api/bonos")
 def listar_bonos():

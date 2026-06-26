@@ -58,7 +58,6 @@ def livez():
     """Liveness: el proceso está vivo. No depende de la BD."""
     return {"status": "ok"}
 
-#asd
 @app.get("/readyz")
 def readyz():
     """Readiness: ¿puede recibir tráfico? Verifica la conexión a PostgreSQL."""

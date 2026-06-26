@@ -1,4 +1,4 @@
-yamlname: CI/CD - bonos-service
+name: CI/CD - bonos-service
 
 on:
   push:
